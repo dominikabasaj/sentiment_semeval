@@ -20,31 +20,8 @@ def load_glove(embed_file):
 
     return model
 
-def tokenize_tweets(train):
+def tokenize_tweets(train, text_processor):
     tokenized_tweets = []
-    text_processor = TextPreProcessor(
-        # terms that will be normalized
-        normalize=['url', 'email', 'percent', 'money', 'phone', 'user',
-                   'time', 'url', 'date', 'number'],
-        # terms that will be annotated
-        annotate={"hashtag", "allcaps", "elongated", "repeated",
-                  'emphasis', 'censored'},
-        fix_html=True,  # fix HTML tokens
-
-        # corpus from which the word statistics are going to be used
-        # for word segmentation
-        segmenter="twitter",
-
-        unpack_hashtags=True,  # perform word segmentation on hashtags
-        unpack_contractions=True,  # Unpack contractions (can't -> can not)
-        spell_correct_elong=False,  # spell correction for elongated words
-        tokenizer=SocialTokenizer(lowercase=True).tokenize,
-
-
-        # list of dictionaries, for replacing tokens extracted from the text,
-        # with other expressions. You can pass more than one dictionaries.
-        dicts=[emoticons]
-    )
 
     social_tokenizer = init_tokenizer()
     for tweet in train['tweet']:
@@ -54,31 +31,8 @@ def tokenize_tweets(train):
 
     return tokenized_tweets
 
-def tokenize_tweets2(train):
+def tokenize_tweets2(train, text_processor):
     tokenized_tweets = []
-    text_processor = TextPreProcessor(
-        # terms that will be normalized
-        normalize=['url', 'email', 'percent', 'money', 'phone', 'user',
-                   'time', 'url', 'date', 'number'],
-        # terms that will be annotated
-        annotate={"hashtag", "allcaps", "elongated", "repeated",
-                  'emphasis', 'censored'},
-        fix_html=True,  # fix HTML tokens
-
-        # corpus from which the word statistics are going to be used
-        # for word segmentation
-        segmenter="twitter",
-
-        unpack_hashtags=True,  # perform word segmentation on hashtags
-        unpack_contractions=True,  # Unpack contractions (can't -> can not)
-        spell_correct_elong=False,  # spell correction for elongated words
-        tokenizer=SocialTokenizer(lowercase=True).tokenize,
-
-
-        # list of dictionaries, for replacing tokens extracted from the text,
-        # with other expressions. You can pass more than one dictionaries.
-        dicts=[emoticons]
-    )
 
     social_tokenizer = init_tokenizer()
     for tweet in train:
@@ -113,9 +67,9 @@ class RnnModel(nn.Module):
 
         self.embed = nn.Embedding(params['n_embed'], params['dim_embed'], padding_idx=0)
         self.embed.weight.requires_grad = False
-        self.lstm = nn.LSTM(300, 150, bidirectional=True, num_layers=2, dropout=0.5)
+        self.lstm = nn.LSTM(300, 200, bidirectional=True, num_layers=2, dropout=0.5)
 
-        self.linear = nn.Linear(300, 3)
+        self.linear = nn.Linear(400, 3)
 
     def forward(self, data, lengths):
         embeded_tweets = self.embed(data)
