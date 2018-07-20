@@ -39,6 +39,7 @@ def pad_sequences(labels, tokenized_tweets, dictionary):
             except KeyError:
                 tmp.append(dictionary['UNK'])
         tokenized_tweets_int.append(tmp)
+
     # Calculate length of contexts and pad sequences with 0
     lengths = torch.LongTensor([len(x) for x in tokenized_tweets_int])
 
@@ -48,6 +49,7 @@ def pad_sequences(labels, tokenized_tweets, dictionary):
 
     lengths, perm_idx_context = lengths.sort(0, descending=True)
     tweet_tensor = tweet_tensor[perm_idx_context]
+
 
     label_tensor = torch.LongTensor(labels)
     label_tensor = label_tensor[perm_idx_context]

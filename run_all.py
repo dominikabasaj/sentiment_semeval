@@ -49,10 +49,10 @@ if __name__ == '__main__':
 
     dataset = dataset.sample(frac=1.0).reset_index()
 
-    dataset_train = dataset[:int(round(len(dataset)*0.8))]
+    dataset_train = dataset[:int(round(len(dataset)*0.95))]
     dataset_train = dataset_train[:int(round(len(dataset_train)*0.9))]
     dataset_valid = dataset_train[int(round(len(dataset_train)*0.9)):]
-    dataset_test = dataset[int(round(len(dataset)*0.8)):]
+    dataset_test = dataset[int(round(len(dataset)*0.95)):]
 
     dataset_train.reset_index(inplace=True)
     print(len(dataset_train))
@@ -65,11 +65,11 @@ if __name__ == '__main__':
     test = ReaderDataset(dataset_test)
 
     train_data = torch.utils.data.DataLoader(dataset=train,
-                                                   batch_size=100,
+                                                   batch_size=50,
                                                    shuffle=False)
 
     valid_data = torch.utils.data.DataLoader(dataset=valid,
-                                                   batch_size=100,
+                                                   batch_size=50,
                                                    shuffle=False)
 
     test_data = torch.utils.data.DataLoader(dataset=test,
@@ -84,13 +84,14 @@ if __name__ == '__main__':
     params['n_embed'] = vocabulary.shape[0]
     model = RnnModel(params=params)
     model.embed.weight.data.copy_(torch.from_numpy(vocabulary))
+    print(vocabulary)
 
     labels_dict = {'neutral': 0,
                    'negative': 1,
                    'positive': 2}
 
 
-    for epoch in range(5):
+    for epoch in range(20):
         print('Epoch {}'.format(epoch))
         training_loss = 0.0
 
@@ -107,9 +108,9 @@ if __name__ == '__main__':
 
             tensor_dictionary = pad_sequences(indexed_labels, tokenized_tweets, dictionary)
 
-            data = tensor_dictionary['tweet_tensor']
-            label = tensor_dictionary['label_tensor']
-            model.train()
+            data = tensor_dictionary['tweet_tensor'].cuda()
+            label = tensor_dictionary['label_tensor'].cuda()
+            model.cuda().train()
 
             predictions = model(data, tensor_dictionary['length'])
             predictions = F.log_softmax(predictions, dim=1)
@@ -119,7 +120,7 @@ if __name__ == '__main__':
 
             training_loss += loss.data
             # optimizer = optim.SGD(filter(lambda x: x.requires_grad, model.parameters()), lr=0.001,  momentum=0.9, nesterov = True)
-            optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.001)
+            optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.0005)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -138,10 +139,10 @@ if __name__ == '__main__':
 
             tensor_dictionary = pad_sequences(indexed_labels, tokenized_tweets, dictionary)
 
-            data = tensor_dictionary['tweet_tensor']
-            label = tensor_dictionary['label_tensor']
+            data = tensor_dictionary['tweet_tensor'].cuda()
+            label = tensor_dictionary['label_tensor'].cuda()
 
-            model.eval()
+            model.cuda().eval()
 
             predictions= model(data, tensor_dictionary['length'])
 

@@ -67,9 +67,8 @@ class RnnModel(nn.Module):
 
         self.embed = nn.Embedding(params['n_embed'], params['dim_embed'], padding_idx=0)
         self.embed.weight.requires_grad = False
-        self.lstm = nn.LSTM(300, 150, bidirectional=True, num_layers=2, dropout=0.2)
-
-        self.linear = nn.Linear(300, 3)
+        self.lstm = nn.LSTM(300, 200, bidirectional=True, num_layers=3, dropout=0.3)
+        self.linear = nn.Linear(400, 3)
 
     def forward(self, data, lengths):
         embeded_tweets = self.embed(data)
