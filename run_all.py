@@ -45,12 +45,13 @@ if __name__ == '__main__':
 
     dataset = read_files(params['data_path'])
     #dataset['tokenized_tweet'] = tokenize_tweets(dataset)
+    dataset = dataset[(dataset['category']=='positive') | (dataset['category']=='negative') | (dataset['category']=='neutral')]
 
-    dataset = dataset.sample(frac=0.5).reset_index()
+    dataset = dataset.sample(frac=1.0).reset_index()
 
     dataset_train = dataset[:int(round(len(dataset)*0.8))]
-    dataset_train = dataset_train[:int(round(len(dataset_train)*0.8))]
-    dataset_valid = dataset_train[int(round(len(dataset_train)*0.8)):]
+    dataset_train = dataset_train[:int(round(len(dataset_train)*0.9))]
+    dataset_valid = dataset_train[int(round(len(dataset_train)*0.9)):]
     dataset_test = dataset[int(round(len(dataset)*0.8)):]
 
     dataset_train.reset_index(inplace=True)
@@ -102,21 +103,13 @@ if __name__ == '__main__':
         for batch_idx, ex in enumerate(train_data):
             tokenized_tweets = tokenize_tweets2(ex['tokenized_tweet'], text_preprocessor)
 
-            indexed_labels = []
-            for i in ex['label']:
-                tmp = []
-                try:
-                    tmp.append(labels_dict[i])
-                except KeyError:
-                    tmp.append(dictionary['UNK'])
-                indexed_labels.append(tmp)
-            print(len(indexed_labels))
+            indexed_labels = [labels_dict[i] for i in ex['label']]
 
             tensor_dictionary = pad_sequences(indexed_labels, tokenized_tweets, dictionary)
 
-            data = tensor_dictionary['tweet_tensor'].cuda()
-            label = tensor_dictionary['label_tensor'].cuda()
-            model.cuda().train()
+            data = tensor_dictionary['tweet_tensor']
+            label = tensor_dictionary['label_tensor']
+            model.train()
 
             predictions = model(data, tensor_dictionary['length'])
             predictions = F.log_softmax(predictions, dim=1)
@@ -126,7 +119,7 @@ if __name__ == '__main__':
 
             training_loss += loss.data
             # optimizer = optim.SGD(filter(lambda x: x.requires_grad, model.parameters()), lr=0.001,  momentum=0.9, nesterov = True)
-            optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.005)
+            optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.001)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -145,13 +138,13 @@ if __name__ == '__main__':
 
             tensor_dictionary = pad_sequences(indexed_labels, tokenized_tweets, dictionary)
 
-            data = tensor_dictionary['tweet_tensor'].cuda()
-            label = tensor_dictionary['label_tensor'].cuda()
+            data = tensor_dictionary['tweet_tensor']
+            label = tensor_dictionary['label_tensor']
 
-            model.cuda().eval()
+            model.eval()
 
             predictions= model(data, tensor_dictionary['length'])
-            indexed_labels = torch.LongTensor([labels_dict[i] for i in ex['label']]).cuda()
+
             predictions = F.log_softmax(predictions, dim=1)
             loss = F.nll_loss(predictions, label)
 

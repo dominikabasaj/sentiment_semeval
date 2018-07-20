@@ -32,7 +32,13 @@ def pad_sequences(labels, tokenized_tweets, dictionary):
 
     tokenized_tweets_int = []
     for t in tokenized_tweets:
-        tokenized_tweets_int.append([dictionary[w] for w in t])
+        tmp = []
+        for w in t:
+            try:
+                tmp.append(dictionary[w])
+            except KeyError:
+                tmp.append(dictionary['UNK'])
+        tokenized_tweets_int.append(tmp)
     # Calculate length of contexts and pad sequences with 0
     lengths = torch.LongTensor([len(x) for x in tokenized_tweets_int])
 
